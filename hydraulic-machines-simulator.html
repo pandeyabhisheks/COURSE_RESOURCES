@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Hydraulic Machines Simulator (BME302)</title>
+<style>
+:root{--bg:#0f172a;--c1:#1e293b;--c2:#334155;--ac:#06b6d4;--bl:#0284c7;--tx:#f8fafc;--mu:#94a3b8;--bd:#475569}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Tahoma,sans-serif}
+body{background:var(--bg);color:var(--tx);padding:16px;padding-top:max(16px,env(safe-area-inset-top));padding-bottom:max(16px,env(safe-area-inset-bottom));min-height:100%}
+html{background:#0f172a;color-scheme:dark}
+h1{color:var(--ac);font-size:1.5rem;text-align:center}.sub{color:var(--mu);text-align:center;font-size:.9rem;margin:4px 0 12px}
+.bar{display:flex;justify-content:center;gap:10px;align-items:center;background:var(--c1);padding:10px;border-radius:8px;border:1px solid var(--bd);margin-bottom:12px;flex-wrap:wrap}
+select,button{background:var(--c2);color:var(--tx);border:1px solid var(--bd);padding:8px 14px;border-radius:6px;font-size:.95rem;cursor:pointer}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button{border:0;background:var(--c1);color:var(--mu);font-weight:600}
+.tabs button.on,button:hover{background:var(--bl);color:var(--tx)}
+.tab{display:none}.tab.on{display:block}
+.grid{display:grid;grid-template-columns:minmax(260px,330px) 1fr;gap:14px}@media(max-width:800px){.grid{grid-template-columns:1fr}}
+.card{background:var(--c1);border:1px solid var(--bd);border-radius:8px;padding:14px;margin-bottom:12px}
+.card h3{color:var(--ac);font-size:1rem;margin-bottom:8px}
+.sl{margin-bottom:10px;font-size:.85rem}.sl span{float:right;color:var(--ac);font-weight:700}.sl input[type=range]{width:100%}
+.chk{display:block;margin:6px 0;font-size:.9rem}
+.res{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.res div{background:var(--c2);border-radius:6px;padding:8px}.res small{color:var(--mu);display:block;font-size:.72rem}.res b{font-size:1.05rem;color:var(--ac)}
+.warn{background:#7f1d1d;border:1px solid #ef4444;border-radius:6px;padding:8px;margin-bottom:10px;font-size:.85rem}.ok{background:#14532d;border-color:#22c55e}
+canvas{width:100%;background:#0b1220;border-radius:8px;display:block}
+table{width:100%;border-collapse:collapse;font-size:.8rem;margin-top:8px}td,th{border:1px solid var(--bd);padding:4px 6px;text-align:right}th{background:var(--c2)}
+.th{font-size:.9rem;line-height:1.6;color:#cbd5e1}.th p{margin-bottom:8px}.th code{background:var(--c2);padding:1px 5px;border-radius:4px;color:var(--tx)}
+.note{color:var(--mu);font-size:.78rem;margin-top:6px}
+</style></head><body>
+<h1>Hydraulic Machines Simulator</h1>
+<p class="sub">BME302 Fluid Mechanics and Fluid Machines: turbines and pumps. A simplified teaching model, assumptions in tab 4.</p>
+<div class="bar"><label for="m">Machine:</label><select id="m" onchange="load(this.value)">
+<optgroup label="Turbines"><option value="pelton">Pelton wheel (impulse)</option><option value="francis" selected>Francis turbine (reaction)</option><option value="kaplan">Kaplan turbine (axial)</option></optgroup>
+<optgroup label="Pumps"><option value="cpump">Centrifugal pump</option><option value="rpump">Reciprocating pump</option></optgroup></select></div>
+<div class="tabs"><button class="on" onclick="tab(0,this)">1. Simulation</button><button onclick="tab(1,this)">2. Velocity triangles / indicator diagram</button><button onclick="tab(2,this)">3. Characteristics lab</button><button onclick="tab(3,this)">4. Theory and assumptions</button></div>
+
+<div class="tab on" id="t0"><div class="grid"><div class="card"><h3>Inputs</h3><div id="ctl"></div></div>
+<div><div id="warn"></div><div class="card"><h3>Results</h3><div class="res" id="res"></div></div>
+<div class="card"><canvas id="cv" width="700" height="360" role="img" aria-label="Animated diagram of the selected machine"></canvas><div style="margin-top:8px"><button id="pp" onclick="playing=!playing;this.textContent=playing?'Pause':'Play'">Pause</button></div>
+<p class="note">Animation speed is scaled for viewing. It is not the real rotational speed.</p></div></div></div></div>
+
+<div class="tab" id="t1"><div class="card"><h3 id="t1h"></h3><canvas id="tri" width="860" height="420" role="img" aria-label="Velocity triangles or indicator diagram"></canvas><p class="note" id="t1n"></p></div></div>
+
+<div class="tab" id="t2"><div class="card"><h3 id="t2h"></h3><canvas id="ch" width="860" height="380" role="img" aria-label="Characteristic curves"></canvas><p class="note" id="t2n"></p>
+<button style="margin-top:8px" onclick="csv()">Export data (CSV)</button><div style="overflow-x:auto"><table id="tb"></table></div></div></div>
+
+<div class="tab" id="t3"><div class="card"><h3>Theory and assumptions</h3><div class="th" id="th"></div></div></div>
+
+<script>
+const $=i=>document.getElementById(i),G=9.81,RHO=1000,PI=Math.PI,DR=PI/180;
+const S=(k,l,u,mn,mx,v,st)=>({k,l,u,mn,mx,v,st});
+const lm=S('lm','Mechanical loss','%',0,15,3,.5),lv=S('lv','Volumetric loss (leakage)','%',0,10,2,.5);
+const M={
+pelton:{s:[S('H','Net head H','m',100,800,300,5),S('Q','Jet discharge Q','m³/s',.2,4,1,.05),S('N','Speed N','rpm',150,1000,500,10),S('D1','Pitch circle diameter D','m',.5,3,1.3,.05),S('phi','Bucket exit angle φ','°',5,40,15,1),lm,lv]},
+francis:{s:[S('H','Net head H','m',10,200,40,1),S('Q','Discharge Q','m³/s',1,20,5,.1),S('N','Speed N','rpm',100,1000,300,10),S('D1','Runner inlet diameter D1','m',.5,3,1.2,.05),S('D2','Exit (draft tube) diameter D2','m',.3,2,1,.05),S('a1','Guide vane angle α1','°',10,60,30,1),lm,lv]},
+kaplan:{s:[S('H','Net head H','m',5,50,15,1),S('Q','Discharge Q','m³/s',2,40,12,.5),S('N','Speed N','rpm',60,500,250,10),S('D1','Runner tip diameter D','m',1,5,2.6,.05),S('a1','Guide vane angle α1','°',10,60,26,1),lm,lv]},
+cpump:{s:[S('N','Speed N','rpm',600,3000,1450,10),S('D2','Impeller diameter D2','m',.1,.6,.3,.01),S('b2','Impeller width b2','m',.01,.08,.025,.001),S('B','Blade outlet angle β2','°',15,45,25,1),S('D1','Eye diameter D1','m',.05,.3,.14,.01),S('Hs','Static head Hs','m',0,40,15,.5),S('K','Pipe resistance K (H = Hs + K·Q²)','',500,20000,4000,100),S('hs','Suction lift (negative if flooded)','m',-3,8,3,.1),S('T','Water temperature','°C',5,90,20,1)]},
+rpump:{s:[S('N','Crank speed N','rpm',20,120,60,1),S('L','Stroke L','m',.1,.6,.3,.01),S('D','Piston diameter D','m',.05,.3,.15,.005),S('sl','Slip','%',0,15,4,.5),S('hs','Suction head hs','m',0,8,3,.1),S('hd','Delivery head hd','m',5,60,20,1),S('ls','Suction pipe length','m',1,15,3,.5),S('ds','Suction pipe diameter','m',.05,.2,.12,.005),S('ld','Delivery pipe length','m',2,40,8,1),S('dd','Delivery pipe diameter','m',.05,.2,.1,.005)],chk:[['dbl','Double acting'],['air','Air vessels fitted']]}};
+let cur='francis',p={},playing=true,rot=0,last=0,R0=null,lab=null;
+const nf=v=>v==null||isNaN(v)?'-':Math.abs(v)>=100?v.toFixed(0):Math.abs(v)>=10?v.toFixed(1):v.toFixed(2);
+const dp=s=>(String(s.st).split('.')[1]||'').length;
+
+function load(k){cur=k;p={};M[k].s.forEach(s=>p[s.k]=s.v);(M[k].chk||[]).forEach(c=>p[c[0]]=false);
+ const h=M[k].s.map(s=>`<div class="sl"><label for="i_${s.k}">${s.l}</label><span id="v_${s.k}"></span><input type="range" id="i_${s.k}" min="${s.mn}" max="${s.mx}" step="${s.st}" value="${s.v}" oninput="upd()"></div>`).join('')+(M[k].chk||[]).map(c=>`<label class="chk"><input type="checkbox" id="i_${c[0]}" onchange="upd()"> ${c[1]}</label>`).join('');
+ $('ctl').innerHTML=h;upd();}
+function readp(){M[cur].s.forEach(s=>{p[s.k]=+$('i_'+s.k).value;$('v_'+s.k).textContent=p[s.k].toFixed(dp(s))+' '+s.u});(M[cur].chk||[]).forEach(c=>p[c[0]]=$('i_'+c[0]).checked)}
+
+/* ---------- turbines ---------- */
+function turb(q,k){
+ const Pin=RHO*G*q.Q*q.H,Qr=q.Q*(1-q.lv/100),gh=G*q.H;let W,i,o,ex=[],U1;
+ if(k=='pelton'){const V1=.98*Math.sqrt(2*gh);U1=PI*q.D1*q.N/60;const Vr=V1-U1,c=Math.cos(q.phi*DR),s=Math.sin(q.phi*DR);
+  W=U1*Vr*(1+.95*c);i={U:U1,Vw:V1,Vf:0};o={U:U1,Vw:U1-.95*Vr*c,Vf:.95*Vr*s};
+  ex=[['Jet speed V1',nf(V1)+' m/s'],['Jet diameter d',nf(Math.sqrt(4*Qr/PI/V1)*1000)+' mm'],['Speed ratio U/V1',(U1/V1).toFixed(2)]];}
+ else{let A1,U2;if(k=='francis'){U1=PI*q.D1*q.N/60;U2=PI*q.D2*q.N/60;A1=PI*q.D1*.1*q.D1}else{U1=U2=PI*.7*q.D1*q.N/60;A1=PI/4*q.D1*q.D1*.84}
+  const Vf1=Qr/A1,Vw=Vf1/Math.tan(q.a1*DR),Vf2=k=='francis'?Qr/(PI/4*q.D2*q.D2):Vf1;W=U1*Vw;i={U:U1,Vw,Vf:Vf1};o={U:U2,Vw:0,Vf:Vf2};
+  ex=[['Flow velocity Vf1',nf(Vf1)+' m/s'],['Blade angle β1 needed (from motion direction)',nf(Math.atan2(Vf1,Vw-U1)/DR)+'°']];}
+ const ke=(o.Vw*o.Vw+o.Vf*o.Vf)/2,Ps=RHO*Qr*W*(1-q.lm/100),w=[];
+ if(W+ke>gh*1.001)w.push('Energy balance violated: runner work plus exit energy is more than the head available. Reduce N or D, or change the angle.');
+ if(k=='pelton'&&U1>=.98*Math.sqrt(2*gh))w.push('Bucket speed is not below jet speed, so there is no useful jet action.');
+ return{res:[['Hydraulic power ρgQH',nf(Pin/1e3)+' kW'],['Runner work (Euler) w',nf(W)+' J/kg'],['Shaft power',nf(Ps/1e3)+' kW'],['Hydraulic efficiency w/gH',nf(W/gh*100)+' %'],['Overall efficiency',nf(Ps/Pin*100)+' %'],['Exit energy loss',nf(ke/gh*100)+' % of gH'],['Blade speed U1',nf(U1)+' m/s'],['Specific speed Ns',nf(q.N*Math.sqrt(Ps/1e3)/Math.pow(q.H,1.25))],...ex],
+  warn:w,tri:[['Inlet triangle',i],['Outlet triangle',o]],Ps,eta:Ps/Pin};}
+
+/* ---------- centrifugal pump ---------- */
+function cp(q){
+ const U2=PI*q.D2*q.N/60,cot=1/Math.tan(q.B*DR),Ar=PI*q.D2*q.b2,sg=.85,kin=600*Math.pow(.3/q.D2,4);
+ const Ht=x=>sg*U2*U2/G-U2*cot/G*x/Ar,Ha=x=>Ht(x)-kin*x*x,Hy=x=>q.Hs+q.K*x*x,Qm=sg*U2*Ar/cot;
+ let lo=0,hi=Qm,Q=0;const w=[];
+ if(Ha(0)>Hy(0)){for(let n=0;n<60;n++){const m=(lo+hi)/2;Ha(m)>Hy(m)?lo=m:hi=m}Q=(lo+hi)/2}else w.push('Shut-off head is below the static head, so the pump delivers no flow. Raise N or D2, or lower Hs.');
+ const em=.95,ev=.96,eff=x=>{const h=Ha(x),t=Ht(x);return t>0&&h>0?h/t*em*ev*100:null},BP=x=>RHO*G*x/ev*Ht(x)/em/1e3;
+ const H=Ha(Q),Hth=Ht(Q),Vf2=Q/Ar,Vw2=sg*U2-Vf2*cot,BPq=BP(Q);
+ const pvm=Math.pow(10,8.07131-1730.63/(233.426+q.T))*.133322*1000/(RHO*G),hf=100*Q*Q;
+ const Na=101.3e3/(RHO*G)-pvm-q.hs-hf,V1=Q/(PI/4*q.D1*q.D1),U1=PI*q.D1*q.N/60,Nr=1.1*V1*V1/2/G+.3*(V1*V1+U1*U1)/2/G;
+ if(Q>0&&Na<Nr)w.push('Cavitation risk: NPSH available ('+nf(Na)+' m) is below NPSH required ('+nf(Nr)+' m). Reduce suction lift or water temperature.');
+ const xs=[],n=40;for(let j=0;j<=n;j++)xs.push(Qm*j/n);
+ return{res:[['Operating flow Q',nf(Q*1000)+' L/s'],['Operating head H',nf(H)+' m'],['Euler head (before losses)',nf(Hth)+' m'],['Hydraulic efficiency',nf(Hth>0?H/Hth*100:0)+' %'],['Overall efficiency',nf(Q>0?RHO*G*Q*H/1e3/BPq*100:0)+' %'],['Brake power',nf(BPq)+' kW'],['Specific speed Ns',nf(Q>0&&H>0?q.N*Math.sqrt(Q)/Math.pow(H,.75):0)],['NPSH available',nf(Na)+' m'],['NPSH required',nf(Nr)+' m']],
+  warn:w,tri:[['Outlet triangle',{U:U2,Vw:Vw2,Vf:Vf2}]],Q,H,xs,Ha,Hy,eff,BP,Qm};}
+
+/* ---------- reciprocating pump ---------- */
+function rp(q){
+ const om=2*PI*q.N/60,r=q.L/2,A=PI*q.D*q.D/4,k=q.dbl?2:1,Qt=k*A*q.L*q.N/60,Q=Qt*(1-q.sl/100),f=q.air?.1:1,Ha=10.33,w=[];
+ const has=f*q.ls/G*(A/(PI/4*q.ds*q.ds))*om*om*r,had=f*q.ld/G*(A/(PI/4*q.dd*q.dd))*om*om*r,sepM=Ha-q.hs-has;
+ if(sepM<2.5)w.push('Separation risk: absolute head at the start of the suction stroke is '+nf(sepM)+' m of water, below about 2.5 m. Fit an air vessel, shorten the suction pipe or lower hs.');
+ const P=RHO*G*Q*(q.hs+q.hd)/1e3;
+ return{res:[['Theoretical discharge',nf(Qt*1000)+' L/s'],['Actual discharge',nf(Q*1000)+' L/s'],['Slip',nf(q.sl)+' %'],['Suction acceleration head',nf(has)+' m'],['Delivery acceleration head',nf(had)+' m'],['Abs. head, start of suction',nf(sepM)+' m'],['Water power ρgQ(hs+hd)',nf(P)+' kW'],['Shaft power (80 % assumed)',nf(P/.8)+' kW']],
+  warn:w,has,had,Ha,sepM,Q,P};}
+
+function calc(q,k){return M[k].s.some(s=>s.k=='lv')?turb(q,k):k=='cpump'?cp(q):rp(q)}
+
+function upd(){readp();const r=calc(p,cur);R0=r;
+ $('res').innerHTML=r.res.map(x=>`<div><small>${x[0]}</small><b>${x[1]}</b></div>`).join('');
+ $('warn').innerHTML=r.warn.length?r.warn.map(x=>`<div class="warn">${x}</div>`).join(''):'<div class="warn ok">Operating point is physically consistent.</div>';
+ drawTri();drawLab();$('th').innerHTML=TH[cur];}
+function tab(n,b){document.querySelectorAll('.tab').forEach((e,j)=>e.classList.toggle('on',j==n));document.querySelectorAll('.tabs button').forEach(e=>e.classList.remove('on'));b.classList.add('on')}
+
+/* ---------- generic chart ---------- */
+function chart(cv,Sr,xl,yl,yr,mark){
+ const c=cv.getContext('2d'),W=cv.width,H=cv.height,L=64,Rr=yr?64:22,T=26,B=50;c.clearRect(0,0,W,H);
+ const xs=Sr.flatMap(s=>s.x),x0=Math.min(...xs),x1=Math.max(...xs);
+ const rg=a=>{const v=Sr.filter(s=>(s.ax||0)==a).flatMap(s=>s.y.filter(y=>y!=null));if(!v.length)return[0,1];let lo=Math.min(0,...v),hi=Math.max(...v);if(hi<=lo)hi=lo+1;return[lo,hi*1.08]};
+ const Y=[rg(0),rg(1)],px=x=>L+(x-x0)/((x1-x0)||1)*(W-L-Rr),py=(y,a=0)=>H-B-(y-Y[a][0])/(Y[a][1]-Y[a][0])*(H-B-T);
+ c.font='12px sans-serif';
+ for(let i=0;i<=5;i++){const gy=T+i*(H-B-T)/5;c.strokeStyle='#334155';c.beginPath();c.moveTo(L,gy);c.lineTo(W-Rr,gy);c.stroke();
+  [0,1].forEach(a=>{if(a&&!yr)return;const s=Sr.find(t=>(t.ax||0)==a);c.fillStyle=s?s.c:'#94a3b8';c.textAlign=a?'left':'right';c.fillText(nf(Y[a][1]-(Y[a][1]-Y[a][0])*i/5),a?W-Rr+6:L-6,gy+4)});
+  const gx=L+i*(W-L-Rr)/5;c.fillStyle='#94a3b8';c.textAlign='center';c.fillText(nf(x0+(x1-x0)*i/5),gx,H-B+16)}
+ c.fillStyle='#94a3b8';c.fillText(xl,(L+W-Rr)/2,H-8);c.save();c.translate(14,(T+H-B)/2);c.rotate(-PI/2);c.fillText(yl,0,0);c.restore();
+ if(yr){c.save();c.translate(W-10,(T+H-B)/2);c.rotate(PI/2);c.fillText(yr,0,0);c.restore()}
+ Sr.forEach((s,j)=>{c.strokeStyle=s.c;c.lineWidth=s.d?1.5:2.5;c.setLineDash(s.d?[6,5]:[]);c.beginPath();let on=false;
+  s.x.forEach((x,t)=>{const y=s.y[t];if(y==null){on=false;return}on?c.lineTo(px(x),py(y,s.ax||0)):c.moveTo(px(x),py(y,s.ax||0));on=true});c.stroke();c.setLineDash([]);
+  c.fillStyle=s.c;c.textAlign='left';c.fillText(s.n,L+8+j*0,T+14+j*15)});
+ if(mark)mark(c,px,py)}
+
+/* ---------- tab 2 ---------- */
+function vec(c,x0,y0,x1,y1,col,lb,dash){c.save();c.strokeStyle=col;c.fillStyle=col;c.lineWidth=2.5;if(dash)c.setLineDash([5,5]);c.beginPath();c.moveTo(x0,y0);c.lineTo(x1,y1);c.stroke();c.setLineDash([]);
+ if(!dash){const a=Math.atan2(y1-y0,x1-x0);c.beginPath();c.moveTo(x1,y1);c.lineTo(x1-10*Math.cos(a-.4),y1-10*Math.sin(a-.4));c.lineTo(x1-10*Math.cos(a+.4),y1-10*Math.sin(a+.4));c.fill()}
+ c.font='13px sans-serif';c.fillText(lb,(x0+x1)/2+6,(y0+y1)/2-6);c.restore()}
+function tri(c,x0,y0,t,s,title){const{U,Vw,Vf}=t;c.fillStyle='#f8fafc';c.font='bold 14px sans-serif';c.fillText(title,x0,y0-Vf*s-30);
+ vec(c,x0,y0,x0+U*s,y0,'#eab308','U = '+nf(U));vec(c,x0,y0,x0+Vw*s,y0-Vf*s,'#06b6d4','V = '+nf(Math.hypot(Vw,Vf)));
+ vec(c,x0+U*s,y0,x0+Vw*s,y0-Vf*s,'#ef4444','Vr = '+nf(Math.hypot(Vw-U,Vf)));if(Vf>0)vec(c,x0+Vw*s,y0-Vf*s,x0+Vw*s,y0,'#22c55e','Vf = '+nf(Vf),1);
+ c.fillStyle='#94a3b8';c.font='12px sans-serif';c.fillText('Vw = '+nf(Vw)+' m/s   (all in m/s)',x0,y0+22)}
+function drawTri(){const cv=$('tri'),c=cv.getContext('2d');c.clearRect(0,0,cv.width,cv.height);
+ if(cur=='rpump'){$('t1h').textContent='Indicator diagram (absolute head in the cylinder against piston position)';
+  const r=R0,q=p,Hd=r.Ha+q.hd,Hs=r.Ha-q.hs,L=q.L,sv=[Hs-r.has,Hs+r.has],dv=[Hd+r.had,Hd-r.had];
+  chart(cv,[{n:'Suction stroke',x:[0,L],y:sv,c:'#06b6d4'},{n:'Delivery stroke',x:[0,L],y:dv,c:'#eab308'},{x:[0,0],y:[sv[0],dv[0]],c:'#64748b',n:''},{x:[L,L],y:[sv[1],dv[1]],c:'#64748b',n:''},
+   {n:'Ideal (no acceleration)',x:[0,L],y:[Hs,Hs],c:'#22c55e',d:1},{n:'',x:[0,L],y:[Hd,Hd],c:'#22c55e',d:1},{n:'Atmosphere (10.33 m)',x:[0,L],y:[r.Ha,r.Ha],c:'#94a3b8',d:1},{n:'Separation limit (2.5 m abs.)',x:[0,L],y:[2.5,2.5],c:'#ef4444',d:1}],'Piston position from start of stroke (m)','Absolute head (m of water)',null);
+  $('t1n').textContent='Acceleration head is largest at the ends of the stroke. If the suction line falls below the red line, the water can separate. Air vessels shorten the length that accelerates and flatten the lines.';return}
+ $('t1h').textContent='Velocity triangles (to scale within each triangle)';const T=R0.tri,m=Math.max(...T.flatMap(t=>[t[1].U,Math.hypot(t[1].Vw,t[1].Vf),Math.abs(t[1].Vw)]),1),s=Math.min(240/m,14);
+ T.forEach((t,j)=>tri(c,60+j*(T.length>1?430:200),300,t[1],s,t[0]));
+ $('t1n').textContent=cur=='cpump'?'Outlet triangle with slip: Vw2 = σU2 − Vf2·cotβ2, with σ = 0.85. The inlet is assumed to be radial.':cur=='pelton'?'Inlet: the jet moves along the bucket direction, so the triangle is a straight line. Outlet: the water leaves the bucket at angle φ.':'Inlet and outlet triangles. The outlet is assumed to have no whirl (Vw2 = 0).'}
+
+/* ---------- tab 3 lab ---------- */
+function drawLab(){const cv=$('ch'),q=p,r=R0;let xs=[],rows=[],cols,S2,xl,yl,yr;
+ if(cur=='cpump'){$('t2h').textContent='Pump characteristics (head, efficiency and power against flow)';
+  r.xs.forEach(x=>{rows.push([x*1e3,r.Ha(x),r.Hy(x),r.eff(x),r.BP(x)])});cols=['Q (L/s)','Pump H (m)','System H (m)','Efficiency (%)','Brake power (kW)'];
+  const c=i=>rows.map(w=>w[i]);S2=[{n:'Pump head (m)',x:c(0),y:c(1),c:'#06b6d4'},{n:'System head (m)',x:c(0),y:c(2),c:'#eab308',d:1},{n:'Efficiency (%)',x:c(0),y:c(3),c:'#22c55e',ax:1}];xl='Flow Q (L/s)';yl='Head (m)';yr='Efficiency (%)';
+  $('t2n').textContent='The operating point is where the pump curve crosses the system curve (white marker). Efficiency uses assumed mechanical (0.95) and volumetric (0.96) efficiencies.';
+  cv._m=(c,px,py)=>{c.fillStyle='#fff';c.beginPath();c.arc(px(r.Q*1e3),py(r.H),6,0,7);c.fill()}}
+ else if(cur=='rpump'){$('t2h').textContent='Discharge and power against crank speed';
+  for(let n=10;n<=130;n+=10){const z=rp({...q,N:n});rows.push([n,z.Q*1e3,z.P,z.sepM])}cols=['N (rpm)','Discharge (L/s)','Water power (kW)','Abs. head at start of suction (m)'];
+  const c=i=>rows.map(w=>w[i]);S2=[{n:'Actual discharge (L/s)',x:c(0),y:c(1),c:'#06b6d4'},{n:'Water power (kW)',x:c(0),y:c(2),c:'#eab308',ax:1}];xl='Speed N (rpm)';yl='Discharge (L/s)';yr='Power (kW)';
+  $('t2n').textContent='Discharge is proportional to speed. The last column shows where separation becomes a risk as speed rises (below about 2.5 m).';cv._m=null}
+ else{$('t2h').textContent='Head sweep using similarity laws (unit quantities)';const H0=q.H;
+  for(let j=0;j<=12;j++){const h=H0*(.4+.1*j),f=Math.sqrt(h/H0);rows.push([h,q.N*f,q.Q*f,r.Ps*f*f*f/1e3,q.N*f/Math.sqrt(h),r.Ps*f*f*f/1e3/Math.pow(h,1.5),r.eta*100])}
+  cols=['H (m)','N (rpm)','Q (m³/s)','P shaft (kW)','Nu = N/√H','Pu = P/H^1.5','Efficiency (%)'];
+  const c=i=>rows.map(w=>w[i]);S2=[{n:'Shaft power (kW)',x:c(0),y:c(3),c:'#06b6d4'},{n:'Speed (rpm)',x:c(0),y:c(1),c:'#eab308',ax:1}];xl='Net head H (m)';yl='Shaft power (kW)';yr='Speed (rpm)';
+  $('t2n').textContent='This is not a measured test. It assumes the same turbine at a different head with dynamic similarity: N ∝ √H, Q ∝ √H, P ∝ H^1.5 and constant efficiency. Nu and Pu stay constant, which is the point of unit quantities.';cv._m=null}
+ chart(cv,S2,xl,yl,yr,cv._m);lab={cols,rows};
+ $('tb').innerHTML='<tr>'+cols.map(x=>'<th>'+x+'</th>').join('')+'</tr>'+rows.map(w=>'<tr>'+w.map(x=>'<td>'+nf(x)+'</td>').join('')+'</tr>').join('')}
+async function csv(){const t=lab.cols.join(',')+'\n'+lab.rows.map(w=>w.map(x=>x==null?'':(+x).toFixed(4)).join(',')).join('\n'),f=cur+'_characteristics.csv',bl=new Blob([t],{type:'text/csv'});
+ try{const dl=window.claude&&await window.claude.use('downloads');if(dl){await dl.save({filename:f,data:bl});return}}catch(e){if(e&&e.code=='declined')return}
+ const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=f;document.body.appendChild(a);a.click();a.remove()}
+
+/* ---------- animation ---------- */
+function anim(ts){const dt=Math.min(.05,(ts-last)/1e3||0);last=ts;const s=M[cur].s.find(x=>x.k=='N'),vis=1.5+4.5*(p.N-s.mn)/(s.mx-s.mn);if(playing)rot+=dt*vis;
+ const cv=$('cv'),c=cv.getContext('2d'),cx=350,cy=180,t=ts/1e3;c.clearRect(0,0,700,360);c.lineCap='round';
+ const ring=(r,col,w)=>{c.beginPath();c.arc(cx,cy,r,0,7);c.strokeStyle=col;c.lineWidth=w;c.stroke()};
+ const dots=(a,b,dirIn)=>{c.fillStyle='rgba(56,189,248,.8)';for(let i=0;i<28;i++){const u=((t*.25*(playing?1:0)+i/28)%1),r=dirIn?b-(b-a)*u:a+(b-a)*u,an=i*2.4+u*1.5;c.beginPath();c.arc(cx+r*Math.cos(an),cy+r*Math.sin(an),3,0,7);c.fill()}};
+ const spin=(n,r0,r1,bend,col)=>{c.save();c.translate(cx,cy);c.rotate(rot);c.strokeStyle=col;c.lineWidth=4;for(let i=0;i<n;i++){c.save();c.rotate(i*2*PI/n);c.beginPath();c.moveTo(r0,0);c.quadraticCurveTo((r0+r1)/2,bend,r1,0);c.stroke();c.restore()}c.restore()};
+ if(cur=='pelton'){ring(120,'#475569',3);c.strokeStyle='#38bdf8';c.lineWidth=9;c.beginPath();c.moveTo(40,cy+120);c.lineTo(cx,cy+120);c.stroke();
+  for(let i=0;i<14;i++){const a=rot+i*2*PI/14;c.save();c.translate(cx+120*Math.cos(a),cy+120*Math.sin(a));c.rotate(a+PI/2);c.fillStyle='#0284c7';c.beginPath();c.ellipse(0,0,13,20,0,0,7);c.fill();c.restore()}
+  c.fillStyle='#94a3b8';c.beginPath();c.arc(cx,cy,16,0,7);c.fill()}
+ else if(cur=='francis'){ring(165,'#334155',10);for(let i=0;i<16;i++){const a=i*2*PI/16;c.save();c.translate(cx+125*Math.cos(a),cy+125*Math.sin(a));c.rotate(a+p.a1*DR);c.fillStyle='#06b6d4';c.fillRect(-14,-2.5,28,5);c.restore()}
+  spin(12,30,100,35,'#0284c7');dots(35,160,true);c.fillStyle='#94a3b8';c.beginPath();c.arc(cx,cy,22,0,7);c.fill()}
+ else if(cur=='kaplan'){ring(150,'#334155',10);ring(95,'#475569',2);c.save();c.translate(cx,cy);c.rotate(rot);c.fillStyle='#0284c7';for(let i=0;i<5;i++){c.save();c.rotate(i*2*PI/5);c.beginPath();c.ellipse(60,0,42,13,.4,0,7);c.fill();c.restore()}c.restore();
+  c.fillStyle='#94a3b8';c.beginPath();c.arc(cx,cy,26,0,7);c.fill()}
+ else if(cur=='cpump'){ring(150,'#334155',8);c.strokeStyle='#334155';c.lineWidth=8;c.beginPath();c.moveTo(cx+150,cy);c.lineTo(cx+150,30);c.stroke();
+  spin(7,26,105,-45,'#06b6d4');dots(30,150,false);c.fillStyle='#94a3b8';c.beginPath();c.arc(cx,cy,18,0,7);c.fill()}
+ else{const ox=130,r=55,l=170,pxp=ox+r*Math.cos(rot)+Math.sqrt(l*l-Math.pow(r*Math.sin(rot),2)),py0=cy;
+  c.strokeStyle='#475569';c.lineWidth=3;c.beginPath();c.arc(ox,cy,r,0,7);c.stroke();c.strokeStyle='#eab308';c.lineWidth=6;c.beginPath();c.moveTo(ox+r*Math.cos(rot),cy+r*Math.sin(rot));c.lineTo(pxp,cy);c.stroke();
+  c.strokeStyle='#64748b';c.lineWidth=4;c.strokeRect(300,cy-45,330,90);c.fillStyle='#0284c7';c.fillRect(pxp,cy-43,16,86);c.fillStyle='rgba(56,189,248,.45)';c.fillRect(pxp+16,cy-43,630-pxp-16,86);
+  c.fillStyle='#22c55e';c.fillRect(612,cy-60,14,14);c.fillStyle='#ef4444';c.fillRect(612,cy+46,14,14);c.fillStyle='#94a3b8';c.font='12px sans-serif';c.fillText('delivery valve',548,cy-66);c.fillText('suction valve',548,cy+76)}
+ requestAnimationFrame(anim)}
+
+/* ---------- theory ---------- */
+const AS='<p><b>Check ranges and constants against your prescribed textbook.</b> Typical head and specific-speed ranges differ between books, so none are fixed here.</p>';
+const TTT='Hydraulic power <code>P = ρgQH</code>. Specific speed <code>Ns = N√P / H^1.25</code> with N in rpm, P in kW, H in m. Shaft power = ρ·Q·(1−volumetric loss)·w·(1−mechanical loss).';
+const TT=(n,e,a,tail=TTT)=>`<p><b>${n}</b></p><p>${e}</p><p><b>Assumptions in this model:</b> ${a}</p><p>${tail}</p>${AS}`;
+const TH={
+pelton:TT('Pelton wheel (impulse turbine)','Jet speed <code>V1 = Cv√(2gH)</code>. Work per kg <code>w = U(V1−U)(1 + k·cosφ)</code>, where φ is the bucket exit angle. The best speed ratio is near U/V1 = 0.5 in the ideal case.','Cv = 0.98 and bucket friction factor k = 0.95. A single jet. Exit energy is computed from the outlet triangle.'),
+francis:TT('Francis turbine (radial inward flow reaction turbine)','Euler equation <code>w = U1·Vw1 − U2·Vw2</code>. Here the exit is taken with no whirl, so <code>w = U1·Vw1</code>, with <code>Vw1 = Vf1 / tanα1</code> and <code>Vf1 = Q / (πD1B1)</code>. The blade angle β1 is found from the inlet triangle.','Runner inlet width B1 = 0.1·D1. Exit area = π·D2²/4. Hydraulic efficiency is w/gH. The model warns if w plus exit energy is more than gH.'),
+kaplan:TT('Kaplan turbine (axial flow reaction turbine)','Same Euler equation. Axial flow gives U1 = U2 at the mean diameter. With no exit whirl, <code>w = U·Vw1</code> and Vf is constant through the runner.','Hub diameter = 0.4 of tip diameter, mean diameter = 0.7 D. Blades are not adjusted in this model.'),
+cpump:TT('Centrifugal pump','Euler head <code>Hth = U2·Vw2 / g</code> with <code>Vw2 = σU2 − Vf2·cotβ2</code>. The actual head also loses an amount that grows with Q². The pump runs where its head curve meets the system curve <code>H = Hs + K·Q²</code>. NPSH available = atmospheric head − vapour pressure head − suction lift − suction loss.','Slip factor σ = 0.85, radial entry, mechanical efficiency 0.95, volumetric efficiency 0.96, suction loss 100·Q² m. Vapour pressure comes from the Antoine equation for water. NPSH required is an approximate eye-velocity estimate, not a manufacturer value. Hs is the total static head of the system; the suction lift entered separately is used only for NPSH.','Water power <code>ρgQH</code>. Brake power = ρg(Q/ηv)·Hth/ηm. Specific speed <code>Ns = N√Q / H^0.75</code> with N in rpm, Q in m³/s and H in m (SI form; other books use other units, so state the units you use).'),
+rpump:TT('Reciprocating pump','Theoretical discharge <code>Q = A·L·N/60</code> (twice for double acting). Slip = (Qth − Qact)/Qth. Acceleration head at the end of a stroke <code>ha = (l/g)(A/a)ω²r</code>, with r = L/2. Air vessels are assumed to cut the accelerating pipe length to 10 % of the pipe length.','Simple harmonic piston motion. Separation limit 2.5 m of water absolute. Atmospheric head 10.33 m. Shaft power assumes 80 % overall efficiency. Friction heads are not included.','Water power <code>ρgQ(hs + hd)</code> using static heads only. Shaft power assumes 80 % overall efficiency.')};
+
+load('francis');requestAnimationFrame(anim);
+</script></body></html>

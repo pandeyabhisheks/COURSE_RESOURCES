@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BME 302 and BNC 501 Resources</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600&family=Work+Sans:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f6f8; --surface:#ffffff; --ink:#1b2733; --muted:#55636f;
+  --line:#d3dce3; --accent:#0f5c6e; --accent-ink:#ffffff;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#10181e; --surface:#17222a; --ink:#e6edf2; --muted:#9aabb8;
+    --line:#2a3944; --accent:#5cc0d4; --accent-ink:#0b1318; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10181e; --surface:#17222a; --ink:#e6edf2; --muted:#9aabb8;
+  --line:#2a3944; --accent:#5cc0d4; --accent-ink:#0b1318; color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Source Serif 4",Georgia,serif;font-size:18px;line-height:1.65}
+.wrap{max-width:46rem;margin:0 auto;padding:2.5rem 1.25rem 4rem}
+h1,h2,h3,.tag{font-family:"Work Sans",system-ui,sans-serif}
+header{padding-bottom:1.5rem;border-bottom:3px solid var(--accent);margin-bottom:2.5rem}
+h1{font-size:2.3rem;line-height:1.15;margin:0 0 .5rem;font-weight:600}
+.sub{color:var(--muted);margin:0}
+h2{font-size:1.35rem;margin:2.75rem 0 1rem;font-weight:600}
+.bio{display:flex;gap:1.25rem;align-items:flex-start}
+.avatar{flex:0 0 7rem;width:7rem;height:7rem;object-fit:cover;object-position:top;border-radius:50%;background:var(--accent);
+  color:var(--accent-ink);display:grid;place-items:center;
+  font:600 1.8rem "Work Sans",system-ui,sans-serif}
+.bio p{margin:0 0 .75rem;max-width:38rem}
+.group{background:var(--surface);border:1px solid var(--line);border-radius:6px;
+  padding:1.1rem 1.25rem;margin-bottom:1rem}
+.group h3{margin:0 0 .5rem;font-size:1.05rem;font-weight:600}
+ul{list-style:none;margin:0;padding:0}
+li{padding:.55rem 0;border-top:1px solid var(--line)}
+li:first-child{border-top:0}
+a{color:var(--accent);text-underline-offset:3px}
+a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.note{color:var(--muted);font-size:.9rem}
+footer{margin-top:3rem;color:var(--muted);font-size:.9rem}
+@media (max-width:30rem){.bio{flex-direction:column}h1{font-size:1.9rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- EDIT: course name and one-line description -->
+<header>
+  <h1>BME 302 and BNC 501</h1>
+  <p class="sub">Fluid Mechanics and Fluid Machines (BME 302) and Constitution of India, Law and Engineering (BNC 501). Department of Mechanical Engineering, GLBITM, Greater Noida.</p>
+</header>
+
+<main>
+
+<!-- EDIT: your short biography -->
+<section aria-labelledby="bio">
+  <h2 id="bio">About the instructor</h2>
+  <div class="bio">
+    <img class="avatar" alt="Dr. Abhishek Pandey" src="data:image/jpeg;base64,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">
+    <div>
+      <p><strong>Dr. Abhishek Pandey</strong>, Associate Professor, Department of Mechanical Engineering, GLBITM, Greater Noida.</p>
+      <p>I hold a PhD in Mechanical Engineering from MNNIT Allahabad and have taught for over 23 years. My research is on polymer nanocomposites and self-healing materials. This semester I teach BME 302 and BNC 501.</p>
+      <p class="note">Email: <a href="mailto:pandeyabhisheks@gmail.com">pandeyabhisheks@gmail.com</a><br>Publications: <a href="https://scholar.google.com/citations?user=23wGDJIAAAAJ&amp;hl=en" target="_blank" rel="noopener">Google Scholar profile</a></p>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="syl">
+  <h2 id="syl">BME 302 syllabus (AKTU, 2023-24 onwards)</h2>
+  <div class="group">
+    <h3>Course outcomes</h3>
+    <ul>
+      <li>CO1: Understand the application of mass and momentum conservation laws for fluid flows (K2).</li>
+      <li>CO2: Understand the importance of dimensional analysis (K2).</li>
+      <li>CO3: Evaluate the velocity and pressure variations in various types of simple flows (K3).</li>
+      <li>CO4: Mathematically analyze the flow in water pumps and turbines (K3).</li>
+      <li>CO5: Understand the functioning of centrifugal and reciprocating pumps (K2).</li>
+    </ul>
+  </div>
+  <div class="group">
+    <h3>Units (8 lectures each)</h3>
+    <ul>
+      <li><strong>Unit 1.</strong> Definition of fluid, Newton’s law of viscosity, units and dimensions, properties of fluids, incompressible flow, Bernoulli’s equation and its applications (Pitot tube, orifice meter, venturi meter).</li>
+      <li><strong>Unit 2.</strong> Continuum and free molecular flows, types of flow (steady, uniform, laminar, rotational, compressible, subsonic, subcritical, 1D to 3D), streamlines, continuity equation for 3D and 1D flows.</li>
+      <li><strong>Unit 3.</strong> Laminar flow through pipes, resistance to flow, minor losses, pipes in series and parallel, power transmission, siphon, water hammer. Boundary layer over a flat plate, separation and its control, drag and lift.</li>
+      <li><strong>Unit 4.</strong> Hydrodynamic thrust of a jet, classification of turbines, Pelton wheel (velocity triangles, power, efficiency, governing), Francis and Kaplan turbines, selection of turbines.</li>
+      <li><strong>Unit 5.</strong> Centrifugal pumps (classification, vector diagram, work done, efficiencies, specific speed, cavitation), reciprocating pumps (slip, indicator diagram, air vessels), comparison of the two.</li>
+    </ul>
+  </div>
+  <div class="group">
+    <h3>Reference books</h3>
+    <ul>
+      <li>S. K. Som, G. Biswas and S. Chakraborty, Introduction to Fluid Mechanics and Fluid Machines.</li>
+      <li>R. K. Bansal, Fluid Mechanics and Machines.</li>
+      <li>F. M. White, Fluid Mechanics.</li>
+      <li>Y. A. Cengel, Fluid Mechanics.</li>
+    </ul>
+  </div>
+</section>
+
+<section aria-labelledby="syl2">
+  <h2 id="syl2">BNC 501 syllabus (AKTU, 2024-25 onwards)</h2>
+  <div class="group">
+    <h3>Units</h3>
+    <ul>
+      <li><strong>Unit 1. Introduction and Basic Information about the Indian Constitution.</strong> Meaning of constitution, law and constitutionalism; historical background of the Constituent Assembly; Government of India Act 1935 and Indian Independence Act 1947; enforcement of the Constitution; salient features; the Preamble; Fundamental Rights; Fundamental Duties; Directive Principles of State Policy; parliamentary system; federal system; Centre-State relations; amendment procedure and its historical perspective; emergency provisions (National Emergency, President’s Rule, Financial Emergency); local self-government.</li>
+      <li><strong>Unit 2. Union Executive and State Executive.</strong> Powers of Parliament; functions of the Rajya Sabha and Lok Sabha; powers and functions of the President (compared with the US President); powers and functions of the Prime Minister; the judiciary (independence of the Supreme Court, appointment of judges, judicial review, public interest litigation, judicial activism); Lokpal, Lok Ayukta and the Lokpal and Lokayuktas Act 2013; State executive (Governor, Chief Minister, State Cabinet); State Legislature; High Court and subordinate courts.</li>
+      <li><strong>Unit 3. Introduction and Basic Information about the Legal System.</strong> Sources of law and court structure (enacted law, common law or case law); the court system in India and foreign courts (district court, consumer forum, tribunals, High Courts, Supreme Court); arbitration as an alternative to the courts; contract law, tort and law at the workplace.</li>
+      <li><strong>Unit 4. Election Provisions, Emergency Provisions and Amendment of the Constitution.</strong> Election Commission of India (composition, powers, functions and electoral process); types of emergency (grounds, procedure, duration and effects); amendment of the Constitution (meaning, procedure and limitations).</li>
+      <li><strong>Unit 5. Business Organizations and E-Governance.</strong> Sole traders and partnerships; the Companies Act (formation, Memorandum and Articles of Association, prospectus, shares, directors, general meetings, auditors, winding up); e-governance and the role of engineers in it; need for reformed engineering services at the Union and State level; role of IT professionals in the judiciary; alienation and secessionism as hurdles to industrial development.</li>
+    </ul>
+  </div>
+  <div class="group">
+    <h3>Course outcomes</h3>
+    <ul>
+      <li>CO1: Identify and explore the basic features and modalities of the Indian Constitution.</li>
+      <li>CO2: Differentiate and relate the functioning of the Indian parliamentary system at the Centre and State level.</li>
+      <li>CO3: Differentiate different aspects of the Indian legal system and its related bodies.</li>
+      <li>CO4: Discover and apply different laws and regulations related to engineering practices.</li>
+      <li>CO5: Correlate the role of engineers with different organizations and governance models.</li>
+    </ul>
+  </div>
+  <div class="group">
+    <h3>Referred case studies</h3>
+    <ul>
+      <li>Kesavananda Bharati v. State of Kerala, AIR 1973 SC 1461</li>
+      <li>Maneka Gandhi v. Union of India, AIR 1978 SC 597</li>
+      <li>S. R. Bommai v. Union of India, AIR 1994 SC 1918</li>
+    </ul>
+  </div>
+  <div class="group">
+    <h3>Suggested readings</h3>
+    <ul>
+      <li>Brij Kishore Sharma, Introduction to the Indian Constitution, PHI Learning.</li>
+      <li>Granville Austin, The Indian Constitution: Cornerstone of a Nation, Oxford University Press.</li>
+      <li>S. G. Subramanian, Indian Constitution and Indian Polity, Pearson.</li>
+      <li>Subhash C. Kashyap, Our Constitution, NBT.</li>
+      <li>Madhav Khosla, The Indian Constitution, Oxford University Press.</li>
+      <li>P. M. Bakshi, The Constitution of India, Universal Law Publishing.</li>
+      <li>ICSI, Company Law (Executive Programme, Module II): relevant sections only.</li>
+      <li>MeitY, Handbook on e-Governance Project Lifecycle.</li>
+      <li>Companies Act, 2013: Key Highlights and Analysis (PwC).</li>
+    </ul>
+  </div>
+</section>
+
+<section aria-labelledby="res">
+  <h2 id="res">Resource materials</h2>
+
+  <div class="group">
+    <h3>BME 302: Fluid Mechanics and Fluid Machines</h3>
+    <ul>
+      <li><a href="files/BME302_Unit_I_Lecture_Notes.pdf" target="_blank" rel="noopener">Unit 1: Fluid Properties and Bernoulli’s Equation (lecture notes, PDF)</a></li>
+      <li><a href="files/BME302_Unit_II_Lecture_Notes.pdf" target="_blank" rel="noopener">Unit 2: Fluid Kinematics, Types of Flow and Continuity (lecture notes, PDF)</a></li>
+      <li><a href="files/BME302_Unit_III_Lecture_Notes.pdf" target="_blank" rel="noopener">Unit 3: Pipe Flow and Boundary Layer (lecture notes, PDF)</a></li>
+      <li><a href="files/BME302_Unit_IV_Lecture_Notes.pdf" target="_blank" rel="noopener">Unit 4: Impact of Jets and Hydraulic Turbines (lecture notes, PDF)</a></li>
+      <li><a href="files/BME302_Unit_V_Lecture_Notes.pdf" target="_blank" rel="noopener">Unit 5: Pumps (lecture notes, PDF)</a></li>
+      <li><a href="files/BME302_PYQ_Solutions.pdf" target="_blank" rel="noopener">Previous year questions with solutions (PDF)</a></li>
+      <li><a href="hydraulic-machines-simulator.html" target="_blank" rel="noopener">Hydraulic Machines Simulator: turbines and pumps (interactive)</a></li>
+    </ul>
+  </div>
+
+  <div class="group">
+    <h3>BNC 501: Constitution of India, Law and Engineering</h3>
+    <ul>
+      <li><a href="files/BNC501_Unit_1.pdf" target="_blank" rel="noopener">Unit 1: Introduction and Basic Information about the Indian Constitution (slides, PDF)</a> &middot; <a href="files/BNC501_Unit_1.pptx">PowerPoint</a></li>
+      <li><a href="files/BNC501_Unit_2.pdf" target="_blank" rel="noopener">Unit 2: Union Executive and State Executive (slides, PDF)</a> &middot; <a href="files/BNC501_Unit_2.pptx">PowerPoint</a></li>
+      <li><a href="files/BNC501_Unit_3.pdf" target="_blank" rel="noopener">Unit 3: Introduction and Basic Information about the Legal System (slides, PDF)</a> &middot; <a href="files/BNC501_Unit_3.pptx">PowerPoint</a></li>
+      <li><a href="files/BNC501_Unit_4.pdf" target="_blank" rel="noopener">Unit 4: Election Provisions, Emergency Provisions and Amendment of the Constitution (slides, PDF)</a> &middot; <a href="files/BNC501_Unit_4.pptx">PowerPoint</a></li>
+      <li><a href="files/BNC501_Unit_5.pdf" target="_blank" rel="noopener">Unit 5: Business Organizations and E-Governance (slides, PDF)</a> &middot; <a href="files/BNC501_Unit_5.pptx">PowerPoint</a></li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+</div>
+</body>
+</html>
