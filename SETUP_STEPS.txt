@@ -1,0 +1,43 @@
+SETUP: visitor counter, location, announcements and common questions
+=====================================================================
+This is optional. The site works without it, but then there is no counter, board or log.
+Time needed: about 10 minutes. Cost: free. You need a Google account.
+
+PART A: Create the Google Sheet and script
+1. Go to sheets.google.com and click Blank spreadsheet. Name it "Course site data".
+2. Click Extensions > Apps Script. Delete any code in the editor.
+3. Open the file Code.gs from this folder, copy everything, and paste it into the editor. Click Save.
+4. In the toolbar choose the function "setup" and click Run. Allow the permissions when Google asks
+   (choose your account > Advanced > Go to the project > Allow).
+   This creates the tabs: Dashboard, Visits, Opens, Questions, Announcements, FAQ.
+5. Click Deploy > New deployment. Click the gear next to "Select type" and choose Web app.
+   Execute as: Me.   Who has access: Anyone.   Click Deploy.
+6. Copy the Web app URL (it ends in /exec).
+
+PART B: Connect the site
+7. In your GitHub repository, open config.js (pencil icon).
+8. Put the URL between the quotes:  window.SITE = { API: 'https://script.google.com/macros/s/....../exec' };
+9. Click Commit changes. Wait two minutes and open your site.
+   A notice at the bottom asks visitors to click OK. After that the counter appears in the footer.
+
+HOW IT WORKS
+- Visits tab: one row per visit (visitor ID, page, city, region, country, device). Only after the visitor clicks OK.
+  The visitor ID is a random code stored in the browser. It is not a name.
+- Opens tab: when a student opens a PDF they type name, roll number and email, which are saved with the
+  file name, time and approximate location (from the internet address; the address itself is NOT saved).
+- Dashboard tab: totals and tables by region, country, page, device, file and course. It updates by itself.
+- Region and city are approximate and can be wrong, especially on mobile networks.
+
+ENGAGEMENT "AS AND WHEN REQUIRED"
+- Announcements tab: add a row (Date, Title, Message, Show = Yes). It appears on the home page within 5 minutes.
+  Set Show = No to hide it later.
+- Questions tab: students' questions arrive here with Status "New". Nobody gets an individual reply.
+  When a doubt is common or important, add it to the FAQ tab (Question, Answer, Course, Show = Yes).
+  It appears on the home page for everyone. Change Status to "Answered" or "Ignored" to keep track.
+
+PRIVACY
+- You are collecting personal data (name, roll number, email, approximate location). Tell students why, keep the sheet
+  private (do not share it), delete old rows when no longer needed, and follow your college rules and the
+  Digital Personal Data Protection Act, 2023.
+- The site shows a notice and counts visits only after the visitor clicks OK. Document opens always show the notice.
+- The location lookup uses the free service ipwho.is. If it is blocked or slow, location is saved as blank.

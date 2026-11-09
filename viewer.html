@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>View document</title>
+<link rel="stylesheet" href="style.css">
+<style>
+#doc{display:flex;flex-direction:column;gap:12px;align-items:center;margin:0 0 2rem}
+.pg{background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.25);width:100%;max-width:900px;position:relative}
+.pg canvas{display:block;width:100%;height:auto;-webkit-user-select:none;user-select:none;pointer-events:none}
+#msg{color:var(--muted)}
+#gate{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:1.1rem 1.25rem;max-width:30rem}
+#gate label{display:block;margin:.6rem 0 .15rem;font-family:"Work Sans",system-ui,sans-serif;font-size:.9rem}
+#gate input{width:100%;box-sizing:border-box;padding:.5rem;font:inherit;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink)}
+#gate button{margin-top:1rem;padding:.55rem 1.1rem;font:inherit;background:var(--accent);color:var(--accent-ink);border:0;border-radius:4px;cursor:pointer}
+#gate .small{font-size:.85rem;color:var(--muted);margin:.8rem 0 0}
+#err{color:#b00020;font-size:.9rem;min-height:1.2em}
+#wm{position:fixed;inset:0;pointer-events:none;z-index:50}
+@media print{body{display:none}}
+</style>
+<script src="config.js"></script>
+<script src="site.js" defer></script>
+</head>
+<body>
+<div class="site">
+<div class="top"><a class="brand" href="index.html">Dr. Abhishek Pandey</a><nav><a href="index.html">Home</a><a href="bme302.html">BME 302</a><a href="bnc501.html">BNC 501</a><a href="bio.html">Bio</a></nav></div>
+<main>
+<p class="crumb"><a href="javascript:history.back()">&larr; Back to course page</a></p>
+<h1 id="ttl">Loading...</h1>
+<form id="gate" hidden autocomplete="off">
+<strong>Enter your details to view this document</strong>
+<label for="n">Full name</label><input id="n" required>
+<label for="r">Roll number</label><input id="r" required>
+<label for="e">College email</label><input id="e" type="email" required>
+<p id="err" role="alert"></p>
+<button type="submit">View document</button>
+<p class="small">Notice: your name, roll number and email are recorded with the document name, the time and your approximate location (city, region, country) when you open it, and are shown as a watermark on the pages. Use is for this course only. Do not share or redistribute the material.</p>
+</form>
+<p id="msg"></p>
+<div id="doc"></div>
+</main>
+</div>
+<div id="wm" aria-hidden="true"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+(function(){
+  var OK=["BME302_PYQ_Solutions.pdf", "BME302_Unit_III_Lecture_Notes.pdf", "BME302_Unit_II_Lecture_Notes.pdf", "BME302_Unit_IV_Lecture_Notes.pdf", "BME302_Unit_I_Lecture_Notes.pdf", "BME302_Unit_V_Lecture_Notes.pdf", "BNC501_Unit_1.pdf", "BNC501_Unit_2.pdf", "BNC501_Unit_3.pdf", "BNC501_Unit_4.pdf", "BNC501_Unit_5.pdf"];
+  var f=new URLSearchParams(location.search).get('f');
+  var ttl=document.getElementById('ttl'), msg=document.getElementById('msg'), doc=document.getElementById('doc'), gate=document.getElementById('gate');
+  if(OK.indexOf(f)<0){ttl.textContent='Document not found';msg.textContent='Please go back and choose a document from the course page.';return;}
+  ttl.textContent=f.replace(/\.pdf$/,'').replace(/_/g,' ');
+  ['contextmenu','dragstart','copy'].forEach(function(ev){document.addEventListener(ev,function(e){e.preventDefault();});});
+  document.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&['s','p','S','P'].indexOf(e.key)>=0)e.preventDefault();});
+  function watermark(s){
+    var c=document.createElement('canvas'); c.width=420; c.height=260; var x=c.getContext('2d');
+    x.translate(210,130); x.rotate(-0.45); x.textAlign='center'; x.font='15px sans-serif'; x.fillStyle='rgba(120,120,120,0.28)';
+    x.fillText(s.name+' | '+s.roll,0,-8); x.fillText(new Date().toLocaleDateString(),0,14);
+    document.getElementById('wm').style.background='url('+c.toDataURL()+') repeat';
+  }
+  function log(s){
+    if(!window.SITE||!SITE.API) return;
+    SITE.loc().then(function(l){SITE.post({type:'open',name:s.name,roll:s.roll,email:s.email,file:f,vid:SITE.vid(),city:l.city,region:l.region,country:l.country,ua:navigator.userAgent});});
+  }
+  function fallback(){doc.innerHTML='<iframe src="'+f+'#toolbar=0&navpanes=0" title="'+ttl.textContent+'" style="width:100%;height:80vh;border:0"></iframe>';}
+  function show(){
+    if(typeof pdfjsLib==='undefined'){fallback();return;}
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    pdfjsLib.getDocument(f).promise.then(function(pdf){
+      msg.textContent='View only. Scroll to read ('+pdf.numPages+' pages).';
+      pdf.getPage(1).then(function(p1){
+        var v1=p1.getViewport({scale:1}), ratio=v1.height/v1.width, holders=[];
+        for(var i=1;i<=pdf.numPages;i++){var d=document.createElement('div');d.className='pg';d.dataset.n=i;d.style.aspectRatio=(1/ratio).toString();doc.appendChild(d);holders.push(d);}
+        var io=new IntersectionObserver(function(es){es.forEach(function(en){
+          if(!en.isIntersecting) return; var d=en.target; io.unobserve(d);
+          pdf.getPage(+d.dataset.n).then(function(pg){
+            var w=d.clientWidth||800, base=pg.getViewport({scale:1}), sc=(w/base.width)*(window.devicePixelRatio||1);
+            var vp=pg.getViewport({scale:sc}), c=document.createElement('canvas'); c.width=vp.width; c.height=vp.height;
+            d.style.aspectRatio=''; d.appendChild(c); pg.render({canvasContext:c.getContext('2d'),viewport:vp});
+          });
+        });},{rootMargin:'600px'});
+        holders.forEach(function(d){io.observe(d);});
+      });
+    }).catch(function(){fallback();});
+  }
+  function start(s){gate.hidden=true;watermark(s);log(s);show();}
+  var saved=null; try{saved=JSON.parse(sessionStorage.getItem('stu')||'null');}catch(e){}
+  if(saved&&saved.name){start(saved);return;}
+  gate.hidden=false; msg.textContent='';
+  gate.addEventListener('submit',function(e){
+    e.preventDefault();
+    var s={name:document.getElementById('n').value.trim(),roll:document.getElementById('r').value.trim(),email:document.getElementById('e').value.trim()};
+    if(!s.name||!s.roll||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s.email)){document.getElementById('err').textContent='Please fill in all three fields with a valid email.';return;}
+    try{sessionStorage.setItem('stu',JSON.stringify(s));}catch(e){}
+    start(s);
+  });
+})();
+</script>
+</body>
+</html>

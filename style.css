@@ -59,3 +59,13 @@ nav a:hover,nav a[aria-current]{color:var(--ink);border-bottom-color:var(--accen
 .lead{color:var(--muted);margin:.25rem 0 0}
 footer{margin-top:3rem;color:var(--muted);font-size:.9rem;border-top:1px solid var(--line);padding-top:1rem}
 h1{font-size:2rem}
+
+.note-item{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.7rem 1rem;margin:0 0 .7rem}
+.note-item p{margin:.3rem 0 0}
+details{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.5rem 1rem;margin:0 0 .6rem}
+summary{cursor:pointer;font-weight:600}
+.qform{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:1rem 1.25rem;max-width:34rem}
+.qform label{display:block;margin:.6rem 0 .15rem;font-family:"Work Sans",system-ui,sans-serif;font-size:.9rem}
+.qform input,.qform textarea,.qform select{width:100%;box-sizing:border-box;padding:.5rem;font:inherit;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink)}
+.qform button{margin-top:.9rem;padding:.55rem 1.1rem;font:inherit;background:var(--accent);color:var(--accent-ink);border:0;border-radius:4px;cursor:pointer}
+.small{font-size:.85rem;color:var(--muted)}

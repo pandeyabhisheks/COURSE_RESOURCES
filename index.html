@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600&family=Work+Sans:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
+<script src="site.js" defer></script>
 </head>
 <body>
 <div class="site">
@@ -19,11 +21,24 @@
 <a class="card" href="bme302.html"><h3>BME 302</h3><p>Fluid Mechanics and Fluid Machines</p><span class="go">Syllabus, notes, question bank and simulator &rarr;</span></a>
 <a class="card" href="bnc501.html"><h3>BNC 501</h3><p>Constitution of India, Law and Engineering</p><span class="go">Syllabus and unit-wise slides &rarr;</span></a>
 </div></section>
+<section id="board" aria-labelledby="bh" hidden>
+<h2 id="bh">Announcements and common questions</h2>
+<h3 id="ann-h" hidden>Announcements</h3><div id="ann"></div>
+<h3 id="faq-h" hidden>Common questions</h3><div id="faq"></div>
+<h3>Ask a question</h3>
+<form id="qform" class="qform">
+<label for="qc">Course</label><select id="qc"><option>BME 302</option><option>BNC 501</option><option>Other</option></select>
+<label for="q">Your question</label><textarea id="q" rows="3" required></textarea>
+<label for="qn">Your name (optional)</label><input id="qn" autocomplete="off">
+<button type="submit">Send</button>
+<p id="qmsg" class="small" role="status">Questions of general interest are answered here for everyone. Individual replies are not sent.</p>
+</form>
+</section>
 <section aria-labelledby="about"><h2 id="about">About the instructor</h2>
 <div class="bio"><img class="avatar" alt="Dr. Abhishek Pandey" src="photo.jpg"><div><p><strong>Dr. Abhishek Pandey</strong>, Associate Professor, Department of Mechanical Engineering, GLBITM, Greater Noida.</p><p>I hold a PhD in Mechanical Engineering from MNNIT Allahabad and have taught for over 23 years. My research is on polymer nanocomposites and self-healing materials. This semester I teach BME 302 and BNC 501.</p></div></div>
 <p><a href="bio.html">Read the full bio &rarr;</a></p></section>
 </main>
-<footer>Department of Mechanical Engineering, GLBITM, Greater Noida</footer>
+<footer>Department of Mechanical Engineering, GLBITM, Greater Noida<br><span id="stat"></span></footer>
 </div>
 </body>
 </html>
